@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { Home, Music, PlusCircle, BarChart, Settings } from 'lucide-react';
+import { Home, Music, PlusCircle, BarChart, Settings as SettingsIcon } from 'lucide-react';
 import CardSetList from './components/CardSetList';
 import CardSetEditor from './components/CardSetEditor';
 import StudyMode from './components/StudyMode';
 import Statistics from './components/Statistics';
+import Settings from './components/Settings';
 import { loadCardSets, saveCardSets } from './utils/storage';
 import { sampleSets } from './data/sampleSets';
-import Settings from './components/Settings'; // Settings 컴포넌트 import
 
 function App() {
   const [cardSets, setCardSets] = useState([]);
@@ -63,22 +63,6 @@ function App() {
       <div className="app">
         <nav className="navbar">
           <div className="nav-content">
-    // 네비게이션 JSX 부분 수정 (Settings 아이콘 추가)
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <Link to="/" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <Home size={20} /> 홈
-              </Link>
-              <Link to="/create" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <PlusCircle size={20} /> 새 세트
-              </Link>
-              <Link to="/stats" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <BarChart size={20} /> 통계
-              </Link>
-              {/* 아래 줄 추가 */}
-              <Link to="/settings" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <SettingsIcon size={20} /> 설정 {/* SettingsIcon import 필요 */}
-              </Link>
-            </div>
             <Link to="/" className="nav-title">
               <Music size={28} style={{ marginRight: '10px' }} />
               Music Quiz Master
@@ -92,6 +76,9 @@ function App() {
               </Link>
               <Link to="/stats" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <BarChart size={20} /> 통계
+              </Link>
+              <Link to="/settings" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <SettingsIcon size={20} /> 설정
               </Link>
             </div>
           </div>
