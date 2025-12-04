@@ -8,7 +8,6 @@ import Statistics from './components/Statistics';
 import { loadCardSets, saveCardSets } from './utils/storage';
 import { sampleSets } from './data/sampleSets';
 import Settings from './components/Settings'; // Settings 컴포넌트 import
-import { Settings as SettingsIcon } from 'lucide-react'; // Settings 아이콘 import
 
 function App() {
   const [cardSets, setCardSets] = useState([]);
