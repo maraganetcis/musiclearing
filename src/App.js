@@ -122,6 +122,16 @@ function App() {
             <Route path="/stats" element={
               <Statistics cardSets={cardSets} />
             } />
+            <Route path="/settings" element={
+              <Settings 
+                cardSets={cardSets}
+                onDataImported={() => {
+                  // 데이터 가져오기 후 상태 갱신
+                  const updatedSets = loadCardSets();
+                  setCardSets(updatedSets);
+                }}
+              />
+            } />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>
