@@ -62,6 +62,22 @@ function App() {
       <div className="app">
         <nav className="navbar">
           <div className="nav-content">
+    // 네비게이션 JSX 부분 수정 (Settings 아이콘 추가)
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <Link to="/" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Home size={20} /> 홈
+              </Link>
+              <Link to="/create" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <PlusCircle size={20} /> 새 세트
+              </Link>
+              <Link to="/stats" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <BarChart size={20} /> 통계
+              </Link>
+              {/* 아래 줄 추가 */}
+              <Link to="/settings" style={{ textDecoration: 'none', color: '#333', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <SettingsIcon size={20} /> 설정 {/* SettingsIcon import 필요 */}
+              </Link>
+            </div>
             <Link to="/" className="nav-title">
               <Music size={28} style={{ marginRight: '10px' }} />
               Music Quiz Master
