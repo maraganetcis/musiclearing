@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, Plus, Trash2, Music, Youtube, User, AlertCircle } from 'lucide-react';
+import { Save, Plus, Trash2, Music, Youtube, User, AlertCircle, Edit, X, Check } from 'lucide-react';
 import { generateSetId, generateCardId, extractYouTubeId } from '../utils/storage';
-import { validateYouTubeUrl } from '../utils/youtube';
+import { validateYouTubeUrl, getYouTubeThumbnail } from '../utils/youtube';
 
 const CardSetEditor = ({ onSave, cardSets }) => {
   const { setId } = useParams();
@@ -16,6 +16,16 @@ const CardSetEditor = ({ onSave, cardSets }) => {
   });
   
   const [newCard, setNewCard] = useState({
+    title: '',
+    composer: '',
+    youtubeUrl: '',
+    hints: ['']
+  });
+  
+  // 편집 중인 카드의 ID (null이면 수정 모드 아님)
+  const [editingCardId, setEditingCardId] = useState(null);
+  // 편집 중인 카드의 임시 데이터
+  const [editingCardData, setEditingCardData] = useState({
     title: '',
     composer: '',
     youtubeUrl: '',
@@ -48,10 +58,67 @@ const CardSetEditor = ({ onSave, cardSets }) => {
       ...prev,
       [field]: value
     }));
-    // 에러 제거
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: null }));
     }
+  };
+
+  // 카드 수정 시작
+  const handleEditCard = (card) => {
+    setEditingCardId(card.id);
+    setEditingCardData({
+      title: card.title,
+      composer: card.composer,
+      youtubeUrl: card.youtubeId ? `https://youtu.be/${card.youtubeId}` : '',
+      hints: card.hints && card.hints.length > 0 ? [...card.hints] : ['']
+    });
+  };
+
+  // 카드 수정 중 입력값 변경
+  const handleEditingCardChange = (field, value) => {
+    setEditingCardData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // 카드 수정 저장
+  const handleSaveCardEdit = () => {
+    if (!editingCardData.title.trim() || !editingCardData.composer.trim() || !editingCardData.youtubeUrl.trim()) {
+      alert('곡명, 작곡가, YouTube URL을 모두 입력해주세요.');
+      return;
+    }
+
+    if (!validateYouTubeUrl(editingCardData.youtubeUrl)) {
+      alert('유효한 YouTube URL을 입력해주세요.');
+      return;
+    }
+
+    const youtubeId = extractYouTubeId(editingCardData.youtubeUrl);
+    const validHints = editingCardData.hints.filter(hint => hint.trim());
+    
+    const updatedCards = set.cards.map(card => {
+      if (card.id === editingCardId) {
+        return {
+          ...card,
+          title: editingCardData.title.trim(),
+          composer: editingCardData.composer.trim(),
+          youtubeId: youtubeId,
+          hints: validHints.length > 0 ? validHints : ['힌트가 없습니다']
+        };
+      }
+      return card;
+    });
+
+    setSet(prev => ({ ...prev, cards: updatedCards }));
+    setEditingCardId(null);
+    setEditingCardData({ title: '', composer: '', youtubeUrl: '', hints: [''] });
+  };
+
+  // 카드 수정 취소
+  const handleCancelEdit = () => {
+    setEditingCardId(null);
+    setEditingCardData({ title: '', composer: '', youtubeUrl: '', hints: [''] });
   };
 
   const handleAddHint = () => {
@@ -59,6 +126,32 @@ const CardSetEditor = ({ onSave, cardSets }) => {
       ...prev,
       hints: [...prev.hints, '']
     }));
+  };
+
+  const handleEditHintChange = (index, value) => {
+    const newHints = [...editingCardData.hints];
+    newHints[index] = value;
+    setEditingCardData(prev => ({
+      ...prev,
+      hints: newHints
+    }));
+  };
+
+  const handleAddEditHint = () => {
+    setEditingCardData(prev => ({
+      ...prev,
+      hints: [...prev.hints, '']
+    }));
+  };
+
+  const handleRemoveEditHint = (index) => {
+    if (editingCardData.hints.length > 1) {
+      const newHints = editingCardData.hints.filter((_, i) => i !== index);
+      setEditingCardData(prev => ({
+        ...prev,
+        hints: newHints
+      }));
+    }
   };
 
   const handleHintChange = (index, value) => {
@@ -121,7 +214,6 @@ const CardSetEditor = ({ onSave, cardSets }) => {
       cards: [...prev.cards, card]
     }));
     
-    // 새 카드 입력 필드 초기화
     setNewCard({
       title: '',
       composer: '',
@@ -133,6 +225,9 @@ const CardSetEditor = ({ onSave, cardSets }) => {
   };
 
   const handleRemoveCard = (cardId) => {
+    if (editingCardId === cardId) {
+      handleCancelEdit();
+    }
     setSet(prev => ({
       ...prev,
       cards: prev.cards.filter(card => card.id !== cardId)
@@ -157,10 +252,6 @@ const CardSetEditor = ({ onSave, cardSets }) => {
     
     onSave(updatedSet);
     navigate('/');
-  };
-
-  const getYouTubeThumbnail = (videoId) => {
-    return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
   };
 
   return (
@@ -337,69 +428,197 @@ const CardSetEditor = ({ onSave, cardSets }) => {
           <div className="grid grid-cols-1">
             {set.cards.map((card, index) => (
               <div key={card.id} className="card" style={{ 
-                display: 'flex', 
-                gap: '20px', 
                 marginBottom: '15px',
-                background: '#f8f9fa'
+                background: editingCardId === card.id ? '#f0f7ff' : '#f8f9fa',
+                border: editingCardId === card.id ? '1px solid #667eea' : '1px solid transparent'
               }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                    <div>
-                      <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#333', marginBottom: '5px' }}>
-                        {card.title}
+                {/* 수정 모드 */}
+                {editingCardId === card.id ? (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                      <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                        <Edit size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                        카드 수정 중
                       </h4>
-                      <p style={{ fontSize: '14px', color: '#666' }}>
-                        {card.composer}
-                      </p>
+                      <span style={{ 
+                        background: '#667eea', 
+                        color: 'white', 
+                        padding: '2px 8px', 
+                        borderRadius: '4px',
+                        fontSize: '12px'
+                      }}>
+                        #{index + 1}
+                      </span>
                     </div>
-                    <span style={{ 
-                      background: '#6c757d', 
-                      color: 'white', 
-                      padding: '2px 8px', 
-                      borderRadius: '4px',
-                      fontSize: '12px'
-                    }}>
-                      #{index + 1}
-                    </span>
-                  </div>
-                  
-                  {card.youtubeId && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                      <img 
-                        src={getYouTubeThumbnail(card.youtubeId)} 
-                        alt="썸네일"
-                        style={{ 
-                          width: '80px', 
-                          height: '45px', 
-                          borderRadius: '4px',
-                          objectFit: 'cover'
-                        }}
-                      />
-                      <div style={{ fontSize: '12px', color: '#666' }}>
-                        YouTube ID: {card.youtubeId}
+                    
+                    <div className="grid grid-cols-2" style={{ gap: '15px', marginBottom: '15px' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555' }}>
+                          곡명 *
+                        </label>
+                        <input
+                          type="text"
+                          value={editingCardData.title}
+                          onChange={(e) => handleEditingCardChange('title', e.target.value)}
+                          className="input-field"
+                          style={{ fontSize: '14px', padding: '8px 12px' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555' }}>
+                          작곡가 *
+                        </label>
+                        <input
+                          type="text"
+                          value={editingCardData.composer}
+                          onChange={(e) => handleEditingCardChange('composer', e.target.value)}
+                          className="input-field"
+                          style={{ fontSize: '14px', padding: '8px 12px' }}
+                        />
                       </div>
                     </div>
-                  )}
-                  
-                  {card.hints && card.hints.length > 0 && card.hints[0] !== '힌트가 없습니다' && (
-                    <div style={{ marginTop: '10px' }}>
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '5px' }}>힌트:</div>
-                      <ul style={{ paddingLeft: '20px' }}>
-                        {card.hints.map((hint, i) => (
-                          <li key={i} style={{ fontSize: '12px', color: '#666' }}>{hint}</li>
-                        ))}
-                      </ul>
+                    
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555' }}>
+                        YouTube URL *
+                      </label>
+                      <input
+                        type="text"
+                        value={editingCardData.youtubeUrl}
+                        onChange={(e) => handleEditingCardChange('youtubeUrl', e.target.value)}
+                        className="input-field"
+                        style={{ fontSize: '14px', padding: '8px 12px' }}
+                      />
                     </div>
-                  )}
-                </div>
-                
-                <button
-                  onClick={() => handleRemoveCard(card.id)}
-                  className="btn btn-danger"
-                  style={{ alignSelf: 'flex-start', padding: '10px' }}
-                >
-                  <Trash2 size={16} />
-                </button>
+                    
+                    {/* 힌트 수정 */}
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555' }}>
+                        힌트 (선택사항)
+                      </label>
+                      {editingCardData.hints.map((hint, hintIndex) => (
+                        <div key={hintIndex} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                          <input
+                            type="text"
+                            value={hint}
+                            onChange={(e) => handleEditHintChange(hintIndex, e.target.value)}
+                            className="input-field"
+                            style={{ fontSize: '14px', padding: '8px 12px' }}
+                            placeholder={`힌트 ${hintIndex + 1}`}
+                          />
+                          {editingCardData.hints.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveEditHint(hintIndex)}
+                              className="btn btn-danger"
+                              style={{ padding: '8px' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={handleAddEditHint}
+                        className="btn btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '12px' }}
+                      >
+                        <Plus size={12} /> 힌트 추가
+                      </button>
+                    </div>
+                    
+                    {/* 수정 저장/취소 버튼 */}
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="btn btn-secondary"
+                        style={{ padding: '8px 16px' }}
+                      >
+                        <X size={16} style={{ marginRight: '5px' }} /> 취소
+                      </button>
+                      <button
+                        onClick={handleSaveCardEdit}
+                        className="btn btn-primary"
+                        style={{ padding: '8px 16px' }}
+                      >
+                        <Check size={16} style={{ marginRight: '5px' }} /> 저장
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* 읽기 모드 (기본 표시) */
+                  <div style={{ display: 'flex', gap: '20px' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                        <div>
+                          <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#333', marginBottom: '5px' }}>
+                            {card.title}
+                          </h4>
+                          <p style={{ fontSize: '14px', color: '#666' }}>
+                            {card.composer}
+                          </p>
+                        </div>
+                        <span style={{ 
+                          background: '#6c757d', 
+                          color: 'white', 
+                          padding: '2px 8px', 
+                          borderRadius: '4px',
+                          fontSize: '12px'
+                        }}>
+                          #{index + 1}
+                        </span>
+                      </div>
+                      
+                      {card.youtubeId && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                          <img 
+                            src={getYouTubeThumbnail(card.youtubeId)} 
+                            alt="썸네일"
+                            style={{ 
+                              width: '80px', 
+                              height: '45px', 
+                              borderRadius: '4px',
+                              objectFit: 'cover'
+                            }}
+                          />
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            YouTube ID: {card.youtubeId}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {card.hints && card.hints.length > 0 && card.hints[0] !== '힌트가 없습니다' && (
+                        <div style={{ marginTop: '10px' }}>
+                          <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '5px' }}>힌트:</div>
+                          <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                            {card.hints.map((hint, i) => (
+                              <li key={i} style={{ fontSize: '12px', color: '#666' }}>{hint}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* 카드 작업 버튼들 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <button
+                        onClick={() => handleEditCard(card)}
+                        className="btn btn-secondary"
+                        style={{ padding: '10px' }}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleRemoveCard(card.id)}
+                        className="btn btn-danger"
+                        style={{ padding: '10px' }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
