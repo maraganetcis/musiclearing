@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { Home, Music, PlusCircle, BarChart, Settings as SettingsIcon } from 'lucide-react';
+
+// 컴포넌트 import (확장자 확인 필요)
 import CardSetList from './components/CardSetList';
 import CardSetEditor from './components/CardSetEditor';
 import StudyMode from './components/StudyMode';
 import Statistics from './components/Statistics';
-import Settings from './components/Settings';
+
+// Settings 컴포넌트 import (확장자에 주의!)
+import SettingsComponent from './components/Settings';  // ✅ 이름 변경!
+
 import { loadCardSets, saveCardSets } from './utils/storage';
 import { sampleSets } from './data/sampleSets';
 
