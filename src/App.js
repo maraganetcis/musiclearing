@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { Home, Music, PlusCircle, BarChart, Settings as SettingsIcon } from 'lucide-react';
 
-// 컴포넌트 import
+// 컴포넌트 import - 모두 .js 확장자로 가정
 import CardSetList from './components/CardSetList';
 import CardSetEditor from './components/CardSetEditor';
 import StudyMode from './components/StudyMode';
 import Statistics from './components/Statistics';
-import SettingsComponent from './components/Settings';  // ✅ 이름 변경!
+import DataSettings from './components/Settings';  // 완전히 다른 이름 사용
 
 import { loadCardSets, saveCardSets } from './utils/storage';
 import { sampleSets } from './data/sampleSets';
@@ -20,7 +20,6 @@ function App() {
   useEffect(() => {
     const loadedSets = loadCardSets();
     if (loadedSets.length === 0) {
-      // 샘플 데이터 로드
       saveCardSets(sampleSets);
       setCardSets(sampleSets);
     } else {
@@ -114,10 +113,9 @@ function App() {
               <Statistics cardSets={cardSets} />
             } />
             <Route path="/settings" element={
-              <SettingsComponent  {/* ✅ 여기가 중요! */}
+              <DataSettings 
                 cardSets={cardSets}
                 onDataImported={() => {
-                  // 데이터 가져오기 후 상태 갱신
                   const updatedSets = loadCardSets();
                   setCardSets(updatedSets);
                 }}
